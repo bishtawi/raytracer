@@ -21,7 +21,7 @@ use hittable::{HitRecord, Hittable};
 use hittable_list::HittableList;
 use ray::Ray;
 use sphere::Sphere;
-use vec3::{Color, Point3};
+use vec3::{Color, Point3, Vec3};
 
 fn main() -> Result<()> {
     // Image
@@ -30,6 +30,7 @@ fn main() -> Result<()> {
     let image_width = 400;
     let image_height = utils::float_to_int_truncate(f64::from(image_width) / aspect_ratio);
     let samples_per_pixel = 100;
+    let max_depth = 50;
 
     // World
 
@@ -61,7 +62,7 @@ fn main() -> Result<()> {
                 let u = (f64::from(i) + utils::random_float()) / f64::from(image_width - 1);
                 let v = (f64::from(j) + utils::random_float()) / f64::from(image_height - 1);
                 let r = cam.get_ray(u, v);
-                pixel_color += &ray_color(&r, &world);
+                pixel_color += &ray_color(&r, &world, max_depth);
             }
             write_color(&mut buf_writer, &pixel_color, samples_per_pixel)?;
         }
@@ -78,9 +79,9 @@ fn write_color(
     samples_per_pixel: i32,
 ) -> std::result::Result<(), std::io::Error> {
     let scale = 1.0 / f64::from(samples_per_pixel);
-    let r = pixel_color.x() * scale;
-    let g = pixel_color.y() * scale;
-    let b = pixel_color.z() * scale;
+    let r = (pixel_color.x() * scale).sqrt();
+    let g = (pixel_color.y() * scale).sqrt();
+    let b = (pixel_color.z() * scale).sqrt();
     let ir = utils::float_to_int_truncate(256.0 * utils::clamp(r, 0.0, 0.999));
     let ig = utils::float_to_int_truncate(256.0 * utils::clamp(g, 0.0, 0.999));
     let ib = utils::float_to_int_truncate(256.0 * utils::clamp(b, 0.0, 0.999));
@@ -88,10 +89,15 @@ fn write_color(
     writeln!(writer, "{} {} {}", ir, ig, ib)
 }
 
-fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
+fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
+    if depth <= 0 {
+        return Color::new(0.0);
+    }
+
     let mut rec = HitRecord::default();
-    if world.hit(r, 0.0, f64::INFINITY, &mut rec) {
-        return 0.5 * (rec.normal + Color::new(1.0));
+    if world.hit(r, 0.001, f64::INFINITY, &mut rec) {
+        let target = rec.p + Vec3::random_in_hemisphere(&rec.normal);
+        return 0.5 * ray_color(&Ray::new(rec.p, target - rec.p), world, depth - 1);
     }
     let unit_direction = r.direction().unit_vector();
     let t = 0.5 * (unit_direction.y() + 1.0);

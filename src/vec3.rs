@@ -1,6 +1,8 @@
 use std::fmt;
 use std::ops;
 
+use crate::utils;
+
 pub type Color = Vec3;
 pub type Point3 = Vec3;
 
@@ -60,6 +62,44 @@ impl Vec3 {
 
     pub fn unit_vector(&self) -> Vec3 {
         self / self.length()
+    }
+
+    pub fn random() -> Vec3 {
+        Vec3::new_with_values(
+            utils::random_float(),
+            utils::random_float(),
+            utils::random_float(),
+        )
+    }
+
+    pub fn random_range(min: f64, max: f64) -> Vec3 {
+        Vec3::new_with_values(
+            utils::random_float_range(min, max),
+            utils::random_float_range(min, max),
+            utils::random_float_range(min, max),
+        )
+    }
+
+    pub fn random_in_unit_sphere() -> Vec3 {
+        loop {
+            let p = Vec3::random_range(-1.0, 1.0);
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
+    }
+
+    pub fn random_unit_vector() -> Vec3 {
+        Vec3::random_in_unit_sphere().unit_vector()
+    }
+
+    pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
+        let in_unit_sphere = Vec3::random_in_unit_sphere();
+        if in_unit_sphere.dot(normal) > 0.0 {
+            in_unit_sphere
+        } else {
+            -in_unit_sphere
+        }
     }
 }
 

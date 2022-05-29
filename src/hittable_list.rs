@@ -14,13 +14,14 @@ impl HittableList {
         }
     }
 
+    /* Enable when needed
     pub fn clear(&mut self) {
         self.objects.clear();
     }
 
     pub fn add(&mut self, object: Rc<dyn Hittable>) {
         self.objects.push(object);
-    }
+    }*/
 }
 
 impl Hittable for HittableList {
