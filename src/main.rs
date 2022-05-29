@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 #![deny(clippy::all, clippy::pedantic)]
 
+mod camera;
 mod hittable;
 mod hittable_list;
 mod ray;
@@ -15,11 +16,12 @@ use std::rc::Rc;
 
 use anyhow::Result;
 
+use camera::Camera;
 use hittable::{HitRecord, Hittable};
 use hittable_list::HittableList;
 use ray::Ray;
 use sphere::Sphere;
-use vec3::{Color, Point3, Vec3};
+use vec3::{Color, Point3};
 
 fn main() -> Result<()> {
     // Image
@@ -27,6 +29,7 @@ fn main() -> Result<()> {
     let aspect_ratio = 16.0 / 9.0;
     let image_width = 400;
     let image_height = utils::float_to_int_truncate(f64::from(image_width) / aspect_ratio);
+    let samples_per_pixel = 100;
 
     // World
 
@@ -40,15 +43,7 @@ fn main() -> Result<()> {
 
     // Camera
 
-    let viewport_height = 2.0;
-    let viewport_width = aspect_ratio * viewport_height;
-    let focal_length = 1.0;
-
-    let origin = Point3::new(0.0);
-    let horizontal = Vec3::new_with_values(viewport_width, 0.0, 0.0);
-    let vertical = Vec3::new_with_values(0.0, viewport_height, 0.0);
-    let lower_left_corner =
-        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new_with_values(0.0, 0.0, focal_length);
+    let cam = Camera::default();
 
     // Render
 
@@ -61,14 +56,14 @@ fn main() -> Result<()> {
     for j in (0..image_height).rev() {
         println!("Scanlines remaining: {}", j);
         for i in 0..image_width {
-            let u = f64::from(i) / f64::from(image_width - 1);
-            let v = f64::from(j) / f64::from(image_height - 1);
-            let r = Ray::new(
-                origin,
-                lower_left_corner + u * horizontal + v * vertical - origin,
-            );
-            let pixel_color = ray_color(&r, &world);
-            write_color(&mut buf_writer, &pixel_color)?;
+            let mut pixel_color = Color::new(0.0);
+            for _ in 0..samples_per_pixel {
+                let u = (f64::from(i) + utils::random_float()) / f64::from(image_width - 1);
+                let v = (f64::from(j) + utils::random_float()) / f64::from(image_height - 1);
+                let r = cam.get_ray(u, v);
+                pixel_color += &ray_color(&r, &world);
+            }
+            write_color(&mut buf_writer, &pixel_color, samples_per_pixel)?;
         }
     }
 
@@ -80,10 +75,15 @@ fn main() -> Result<()> {
 fn write_color(
     writer: &mut BufWriter<File>,
     pixel_color: &Color,
+    samples_per_pixel: i32,
 ) -> std::result::Result<(), std::io::Error> {
-    let ir = utils::float_to_int_truncate(255.999 * pixel_color.x());
-    let ig = utils::float_to_int_truncate(255.999 * pixel_color.y());
-    let ib = utils::float_to_int_truncate(255.999 * pixel_color.z());
+    let scale = 1.0 / f64::from(samples_per_pixel);
+    let r = pixel_color.x() * scale;
+    let g = pixel_color.y() * scale;
+    let b = pixel_color.z() * scale;
+    let ir = utils::float_to_int_truncate(256.0 * utils::clamp(r, 0.0, 0.999));
+    let ig = utils::float_to_int_truncate(256.0 * utils::clamp(g, 0.0, 0.999));
+    let ib = utils::float_to_int_truncate(256.0 * utils::clamp(b, 0.0, 0.999));
 
     writeln!(writer, "{} {} {}", ir, ig, ib)
 }
