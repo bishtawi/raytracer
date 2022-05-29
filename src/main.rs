@@ -74,7 +74,19 @@ fn write_color(
 }
 
 fn ray_color(r: &ray::Ray) -> vec3::Color {
+    if hit_sphere(&vec3::Point3::new_with_values(0.0, 0.0, -1.0), 0.5, r) {
+        return vec3::Color::new_with_values(1.0, 0.0, 0.0);
+    }
     let unit_direction = r.direction().unit_vector();
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * vec3::Color::new(1.0) + t * vec3::Color::new_with_values(0.5, 0.7, 1.0)
+}
+
+fn hit_sphere(center: &vec3::Point3, radius: f64, r: &ray::Ray) -> bool {
+    let oc = r.origin() - center;
+    let a = r.direction().dot(r.direction());
+    let b = 2.0 * oc.dot(r.direction());
+    let c = oc.dot(&oc) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant > 0.0
 }

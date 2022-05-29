@@ -39,9 +39,7 @@ impl Vec3 {
     }
 
     pub fn length_squared(&self) -> f64 {
-        self.elements[0] * self.elements[0]
-            + self.elements[1] * self.elements[1]
-            + self.elements[2] * self.elements[2]
+        self.dot(self)
     }
 
     pub fn dot(&self, other: &Vec3) -> f64 {
