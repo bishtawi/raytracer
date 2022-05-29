@@ -2,13 +2,20 @@ use std::fmt;
 use std::ops;
 
 pub type Color = Vec3;
-// pub type Point3 = Vec3; // TODO: Enable when needed
+pub type Point3 = Vec3;
 
+#[derive(Default, Copy, Clone)]
 pub struct Vec3 {
     elements: [f64; 3],
 }
 
 impl Vec3 {
+    pub fn new(v: f64) -> Vec3 {
+        Vec3 {
+            elements: [v, v, v],
+        }
+    }
+
     pub fn new_with_values(e0: f64, e1: f64, e2: f64) -> Vec3 {
         Vec3 {
             elements: [e0, e1, e2],
@@ -58,14 +65,6 @@ impl Vec3 {
     }
 }
 
-impl Default for Vec3 {
-    fn default() -> Vec3 {
-        Vec3 {
-            elements: [0.0, 0.0, 0.0],
-        }
-    }
-}
-
 impl ops::Index<usize> for Vec3 {
     type Output = f64;
 
@@ -90,10 +89,34 @@ impl ops::Neg for &Vec3 {
     }
 }
 
-impl ops::Add<&Vec3> for &Vec3 {
+impl ops::Neg for Vec3 {
+    type Output = Vec3;
+
+    fn neg(self) -> Vec3 {
+        Vec3 {
+            elements: [-self.elements[0], -self.elements[1], -self.elements[2]],
+        }
+    }
+}
+
+impl ops::Add for &Vec3 {
     type Output = Vec3;
 
     fn add(self, other: &Vec3) -> Self::Output {
+        Vec3 {
+            elements: [
+                self.elements[0] + other.elements[0],
+                self.elements[1] + other.elements[1],
+                self.elements[2] + other.elements[2],
+            ],
+        }
+    }
+}
+
+impl ops::Add for Vec3 {
+    type Output = Vec3;
+
+    fn add(self, other: Vec3) -> Self::Output {
         Vec3 {
             elements: [
                 self.elements[0] + other.elements[0],
@@ -112,10 +135,24 @@ impl ops::AddAssign<&Vec3> for Vec3 {
     }
 }
 
-impl ops::Sub<&Vec3> for &Vec3 {
+impl ops::Sub for &Vec3 {
     type Output = Vec3;
 
     fn sub(self, other: &Vec3) -> Self::Output {
+        Vec3 {
+            elements: [
+                self.elements[0] - other.elements[0],
+                self.elements[1] - other.elements[1],
+                self.elements[2] - other.elements[2],
+            ],
+        }
+    }
+}
+
+impl ops::Sub for Vec3 {
+    type Output = Vec3;
+
+    fn sub(self, other: Vec3) -> Self::Output {
         Vec3 {
             elements: [
                 self.elements[0] - other.elements[0],
@@ -134,10 +171,24 @@ impl ops::SubAssign<&Vec3> for Vec3 {
     }
 }
 
-impl ops::Mul<&Vec3> for &Vec3 {
+impl ops::Mul for &Vec3 {
     type Output = Vec3;
 
     fn mul(self, other: &Vec3) -> Self::Output {
+        Vec3 {
+            elements: [
+                self.elements[0] * other.elements[0],
+                self.elements[1] * other.elements[1],
+                self.elements[2] * other.elements[2],
+            ],
+        }
+    }
+}
+
+impl ops::Mul for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Self::Output {
         Vec3 {
             elements: [
                 self.elements[0] * other.elements[0],
@@ -162,7 +213,29 @@ impl ops::Mul<&Vec3> for f64 {
     }
 }
 
+impl ops::Mul<Vec3> for f64 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Self::Output {
+        Vec3 {
+            elements: [
+                self * other.elements[0],
+                self * other.elements[1],
+                self * other.elements[2],
+            ],
+        }
+    }
+}
+
 impl ops::Mul<f64> for &Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, other: f64) -> Vec3 {
+        other * self
+    }
+}
+
+impl ops::Mul<f64> for Vec3 {
     type Output = Vec3;
 
     fn mul(self, other: f64) -> Vec3 {
@@ -179,6 +252,14 @@ impl ops::MulAssign<f64> for Vec3 {
 }
 
 impl ops::Div<f64> for &Vec3 {
+    type Output = Vec3;
+
+    fn div(self, rhs: f64) -> Vec3 {
+        (1.0 / rhs) * self
+    }
+}
+
+impl ops::Div<f64> for Vec3 {
     type Output = Vec3;
 
     fn div(self, rhs: f64) -> Vec3 {

@@ -7,15 +7,33 @@ use std::path::Path;
 
 use anyhow::Result;
 
+mod ray;
 mod vec3;
 
 fn main() -> Result<()> {
     // Image
 
-    let image_width = 256;
-    let image_height = 256;
+    let aspect_ratio = 16.0 / 9.0;
+    let image_width = 400;
+    #[allow(clippy::cast_possible_truncation)] // Truncation is fine
+    let image_height = (f64::from(image_width) / aspect_ratio) as i32;
+
+    // Camera
+
+    let viewport_height = 2.0;
+    let viewport_width = aspect_ratio * viewport_height;
+    let focal_length = 1.0;
+
+    let origin = vec3::Point3::new(0.0);
+    let horizontal = vec3::Vec3::new_with_values(viewport_width, 0.0, 0.0);
+    let vertical = vec3::Vec3::new_with_values(0.0, viewport_height, 0.0);
+    let lower_left_corner = origin
+        - horizontal / 2.0
+        - vertical / 2.0
+        - vec3::Vec3::new_with_values(0.0, 0.0, focal_length);
 
     // Render
+
     let path = Path::new("output.ppm");
     let file = File::create(&path)?;
     let mut buf_writer = BufWriter::new(file);
@@ -25,11 +43,13 @@ fn main() -> Result<()> {
     for j in (0..image_height).rev() {
         println!("Scanlines remaining: {}", j);
         for i in 0..image_width {
-            let pixel_color = vec3::Vec3::new_with_values(
-                f64::from(i) / f64::from(image_width - 1),
-                f64::from(j) / f64::from(image_height - 1),
-                0.25,
+            let u = f64::from(i) / f64::from(image_width - 1);
+            let v = f64::from(j) / f64::from(image_height - 1);
+            let r = ray::Ray::new(
+                origin,
+                lower_left_corner + u * horizontal + v * vertical - origin,
             );
+            let pixel_color = ray_color(&r);
             write_color(&mut buf_writer, &pixel_color)?;
         }
     }
@@ -51,4 +71,10 @@ fn write_color(
     let ib = (255.999 * pixel_color.z()) as i64;
 
     writeln!(writer, "{} {} {}", ir, ig, ib)
+}
+
+fn ray_color(r: &ray::Ray) -> vec3::Color {
+    let unit_direction = r.direction().unit_vector();
+    let t = 0.5 * (unit_direction.y() + 1.0);
+    (1.0 - t) * vec3::Color::new(1.0) + t * vec3::Color::new_with_values(0.5, 0.7, 1.0)
 }
