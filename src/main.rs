@@ -15,68 +15,37 @@ use std::io::{BufWriter, Write};
 use std::path::Path;
 use std::rc::Rc;
 
-use anyhow::Result;
 
 use camera::Camera;
 use hittable::Hittable;
 use hittable_list::HittableList;
+use material::Material;
 use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
 use ray::Ray;
 use sphere::Sphere;
 use vec3::{Color, Point3, Vec3};
 
-fn main() -> Result<()> {
+fn main() -> Result<(), std::io::Error> {
     // Image
 
-    let aspect_ratio = 16.0 / 9.0;
+    let aspect_ratio = 3.0 / 2.0;
     let image_width = 400;
     let image_height = utils::float_to_int_truncate(f64::from(image_width) / aspect_ratio);
-    let samples_per_pixel = 100;
+    let samples_per_pixel = 500;
     let max_depth = 50;
 
     // World
 
-    let material_ground = Rc::new(Lambertian::new(Color::new_with_values(0.8, 0.8, 0.0)));
-    let material_center = Rc::new(Lambertian::new(Color::new_with_values(0.1, 0.2, 0.5)));
-    let material_left = Rc::new(Dielectric::new(1.5));
-    let material_right = Rc::new(Metal::new(Color::new_with_values(0.8, 0.6, 0.2), 0.0));
-
-    let world = HittableList::new(&[
-        Rc::new(Sphere::new(
-            Point3::new_with_values(0.0, -100.5, -1.0),
-            100.0,
-            material_ground,
-        )),
-        Rc::new(Sphere::new(
-            Point3::new_with_values(0.0, 0.0, -1.0),
-            0.5,
-            material_center,
-        )),
-        Rc::new(Sphere::new(
-            Point3::new_with_values(-1.0, 0.0, -1.0),
-            0.5,
-            material_left.clone(),
-        )),
-        Rc::new(Sphere::new(
-            Point3::new_with_values(-1.0, 0.0, -1.0),
-            -0.45,
-            material_left,
-        )),
-        Rc::new(Sphere::new(
-            Point3::new_with_values(1.0, 0.0, -1.0),
-            0.5,
-            material_right,
-        )),
-    ]);
+    let world = random_scene();
 
     // Camera
 
-    let look_from = Point3::new_with_values(3.0, 3.0, 2.0);
-    let look_at = Point3::new_with_values(0.0, 0.0, -1.0);
+    let look_from = Point3::new_with_values(13.0, 2.0, 3.0);
+    let look_at = Point3::new_with_values(0.0, 0.0, 0.0);
     let vup = Vec3::new_with_values(0.0, 1.0, 0.0);
     let vfov = 20.0;
-    let aperture = 2.0;
-    let dist_to_focus = (look_from - look_at).length();
+    let aperture = 0.1;
+    let dist_to_focus = 10.0;
     let cam = Camera::new(
         look_from,
         look_at,
@@ -118,7 +87,7 @@ fn write_color(
     writer: &mut BufWriter<File>,
     pixel_color: &Color,
     samples_per_pixel: i32,
-) -> std::result::Result<(), std::io::Error> {
+) -> Result<(), std::io::Error> {
     let scale = 1.0 / f64::from(samples_per_pixel);
     let r = (pixel_color.x() * scale).sqrt();
     let g = (pixel_color.y() * scale).sqrt();
@@ -151,4 +120,67 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     let unit_direction = r.direction().unit_vector();
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Color::new(1.0) + t * Color::new_with_values(0.5, 0.7, 1.0)
+}
+
+fn random_scene() -> HittableList {
+    let mut world = HittableList::default();
+
+    let ground_material = Rc::new(Lambertian::new(Color::new_with_values(0.5, 0.5, 0.5)));
+    world.add(Rc::new(Sphere::new(
+        Point3::new_with_values(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    )));
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = utils::random_float();
+            let center = Point3::new_with_values(
+                f64::from(a) + 0.9 * utils::random_float(),
+                0.2,
+                f64::from(b) + 0.9 * utils::random_float(),
+            );
+
+            if (center - Point3::new_with_values(4.0, 0.2, 0.0)).length() > 0.9 {
+                let material: Rc<dyn Material> = if choose_mat < 0.8 {
+                    // diffuse
+                    Rc::new(Lambertian::new(Color::random() * Color::random()))
+                } else if choose_mat < 0.95 {
+                    // metal
+                    Rc::new(Metal::new(
+                        Color::random_range(0.5, 1.0),
+                        utils::random_float_range(0.0, 0.5),
+                    ))
+                } else {
+                    // glass
+                    Rc::new(Dielectric::new(1.5))
+                };
+
+                world.add(Rc::new(Sphere::new(center, 0.2, material)));
+            }
+        }
+    }
+
+    let material1 = Rc::new(Dielectric::new(1.5));
+    world.add(Rc::new(Sphere::new(
+        Point3::new_with_values(0.0, 1.0, 0.0),
+        1.0,
+        material1,
+    )));
+
+    let material2 = Rc::new(Lambertian::new(Color::new_with_values(0.4, 0.2, 0.1)));
+    world.add(Rc::new(Sphere::new(
+        Point3::new_with_values(-4.0, 1.0, 0.0),
+        1.0,
+        material2,
+    )));
+
+    let material3 = Rc::new(Metal::new(Color::new_with_values(0.7, 0.6, 0.5), 0.0));
+    world.add(Rc::new(Sphere::new(
+        Point3::new_with_values(4.0, 1.0, 0.0),
+        1.0,
+        material3,
+    )));
+
+    world
 }
