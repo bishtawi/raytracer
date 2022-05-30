@@ -23,7 +23,7 @@ use hittable_list::HittableList;
 use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
 use ray::Ray;
 use sphere::Sphere;
-use vec3::{Color, Point3};
+use vec3::{Color, Point3, Vec3};
 
 fn main() -> Result<()> {
     // Image
@@ -59,7 +59,7 @@ fn main() -> Result<()> {
         )),
         Rc::new(Sphere::new(
             Point3::new_with_values(-1.0, 0.0, -1.0),
-            -0.4,
+            -0.45,
             material_left,
         )),
         Rc::new(Sphere::new(
@@ -71,7 +71,13 @@ fn main() -> Result<()> {
 
     // Camera
 
-    let cam = Camera::default();
+    let cam = Camera::new(
+        Point3::new_with_values(-2.0, 2.0, 1.0),
+        Point3::new_with_values(0.0, 0.0, -1.0),
+        Vec3::new_with_values(0.0, 1.0, 0.0),
+        20.0,
+        aspect_ratio,
+    );
 
     // Render
 
