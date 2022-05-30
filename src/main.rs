@@ -71,12 +71,20 @@ fn main() -> Result<()> {
 
     // Camera
 
+    let look_from = Point3::new_with_values(3.0, 3.0, 2.0);
+    let look_at = Point3::new_with_values(0.0, 0.0, -1.0);
+    let vup = Vec3::new_with_values(0.0, 1.0, 0.0);
+    let vfov = 20.0;
+    let aperture = 2.0;
+    let dist_to_focus = (look_from - look_at).length();
     let cam = Camera::new(
-        Point3::new_with_values(-2.0, 2.0, 1.0),
-        Point3::new_with_values(0.0, 0.0, -1.0),
-        Vec3::new_with_values(0.0, 1.0, 0.0),
-        20.0,
+        look_from,
+        look_at,
+        vup,
+        vfov,
         aspect_ratio,
+        aperture,
+        dist_to_focus,
     );
 
     // Render
