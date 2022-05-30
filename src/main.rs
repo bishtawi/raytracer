@@ -5,6 +5,7 @@ mod camera;
 mod hittable;
 mod hittable_list;
 mod material;
+mod moving_sphere;
 mod ray;
 mod sphere;
 mod utils;
@@ -20,8 +21,8 @@ use rayon::prelude::*;
 use camera::Camera;
 use hittable::Hittable;
 use hittable_list::HittableList;
-use material::Material;
 use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
+use moving_sphere::MovingSphere;
 use ray::Ray;
 use sphere::Sphere;
 use vec3::{Color, Point3, Vec3};
@@ -29,12 +30,12 @@ use vec3::{Color, Point3, Vec3};
 fn main() -> Result<(), std::io::Error> {
     // Image
 
-    let aspect_ratio = 3.0 / 2.0;
-    let image_width = 1200;
+    let aspect_ratio = 16.0 / 9.0;
+    let image_width = 400;
     let image_height = utils::float_to_int_truncate(f64::from(image_width) / aspect_ratio);
-    let samples_per_pixel = 500;
-    let scale = 1.0 / f64::from(samples_per_pixel);
+    let samples_per_pixel = 100;
     let max_depth = 50;
+    let scale = 1.0 / f64::from(samples_per_pixel);
 
     // World
 
@@ -48,7 +49,7 @@ fn main() -> Result<(), std::io::Error> {
     let vfov = 20.0;
     let aperture = 0.1;
     let dist_to_focus = 10.0;
-    let cam = Camera::new(
+    let cam = Camera::new_with_time(
         look_from,
         look_at,
         vup,
@@ -56,6 +57,8 @@ fn main() -> Result<(), std::io::Error> {
         aspect_ratio,
         aperture,
         dist_to_focus,
+        0.0,
+        1.0,
     );
 
     // Render
@@ -151,21 +154,25 @@ fn random_scene() -> HittableList {
             );
 
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                let material: Arc<dyn Material> = if choose_mat < 0.8 {
+                if choose_mat < 0.8 {
                     // diffuse
-                    Arc::new(Lambertian::new(Color::random() * Color::random()))
+                    let center2 = center + Vec3::new(0.0, utils::random_float_range(0.0, 0.5), 0.0);
+                    let mat = Arc::new(Lambertian::new(Color::random() * Color::random()));
+                    world.add(Box::new(MovingSphere::new(
+                        center, center2, 0.0, 1.0, 0.2, mat,
+                    )));
                 } else if choose_mat < 0.95 {
                     // metal
-                    Arc::new(Metal::new(
+                    let mat = Arc::new(Metal::new(
                         Color::random_range(0.5, 1.0),
                         utils::random_float_range(0.0, 0.5),
-                    ))
+                    ));
+                    world.add(Box::new(Sphere::new(center, 0.2, mat)));
                 } else {
                     // glass
-                    Arc::new(Dielectric::new(1.5))
-                };
-
-                world.add(Box::new(Sphere::new(center, 0.2, material)));
+                    let mat = Arc::new(Dielectric::new(1.5));
+                    world.add(Box::new(Sphere::new(center, 0.2, mat)));
+                }
             }
         }
     }
