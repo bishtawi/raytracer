@@ -12,15 +12,15 @@ pub struct Vec3 {
 }
 
 impl Vec3 {
-    pub fn new(v: f64) -> Vec3 {
+    pub fn new(e0: f64, e1: f64, e2: f64) -> Vec3 {
         Vec3 {
-            elements: [v, v, v],
+            elements: [e0, e1, e2],
         }
     }
 
-    pub fn new_with_values(e0: f64, e1: f64, e2: f64) -> Vec3 {
+    pub fn new_single(v: f64) -> Vec3 {
         Vec3 {
-            elements: [e0, e1, e2],
+            elements: [v, v, v],
         }
     }
 
@@ -81,7 +81,7 @@ impl Vec3 {
     }
 
     pub fn random() -> Vec3 {
-        Vec3::new_with_values(
+        Vec3::new(
             utils::random_float(),
             utils::random_float(),
             utils::random_float(),
@@ -89,7 +89,7 @@ impl Vec3 {
     }
 
     pub fn random_range(min: f64, max: f64) -> Vec3 {
-        Vec3::new_with_values(
+        Vec3::new(
             utils::random_float_range(min, max),
             utils::random_float_range(min, max),
             utils::random_float_range(min, max),
@@ -120,7 +120,7 @@ impl Vec3 {
 
     pub fn random_in_unit_disk() -> Vec3 {
         loop {
-            let p = Vec3::new_with_values(
+            let p = Vec3::new(
                 utils::random_float_range(-1.0, 1.0),
                 utils::random_float_range(-1.0, 1.0),
                 0.0,

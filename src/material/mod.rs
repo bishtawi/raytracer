@@ -4,7 +4,7 @@ pub mod metal;
 
 use crate::{hittable::HitRecord, ray::Ray, vec3::Color};
 
-pub trait Material {
+pub trait Material: Sync + Send {
     fn scatter(
         &self,
         r_in: &Ray,
