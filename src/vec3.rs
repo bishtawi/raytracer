@@ -101,6 +101,15 @@ impl Vec3 {
             -in_unit_sphere
         }
     }
+
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.elements[0].abs() < s && self.elements[1].abs() < s && self.elements[2].abs() < s
+    }
+
+    pub fn reflect(&self, n: &Vec3) -> Vec3 {
+        self - &(2.0 * self.dot(n) * n)
+    }
 }
 
 impl ops::Index<usize> for Vec3 {
