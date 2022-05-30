@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::aabb::Aabb;
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::Material;
 use crate::ray::Ray;
@@ -75,5 +76,12 @@ impl Hittable for MovingSphere {
         rec.set_face_normal(r, &outward_normal);
 
         Some(rec)
+    }
+
+    fn bounding_box(&self, time0: f64, time1: f64) -> Option<Aabb> {
+        let rad = Vec3::new_single(self.radius);
+        let box0 = Aabb::new(self.center(time0) - rad, self.center(time0) + rad);
+        let box1 = Aabb::new(self.center(time1) - rad, self.center(time1) + rad);
+        Some(Aabb::surrounding_box(&box0, &box1))
     }
 }

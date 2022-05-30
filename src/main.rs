@@ -1,6 +1,8 @@
 #![forbid(unsafe_code)]
 #![deny(clippy::all, clippy::pedantic)]
 
+mod aabb;
+mod bvh;
 mod camera;
 mod hittable;
 mod hittable_list;
@@ -138,7 +140,7 @@ fn random_scene() -> HittableList {
     let mut world = HittableList::default();
 
     let ground_material = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
         ground_material,
@@ -158,7 +160,7 @@ fn random_scene() -> HittableList {
                     // diffuse
                     let center2 = center + Vec3::new(0.0, utils::random_float_range(0.0, 0.5), 0.0);
                     let mat = Arc::new(Lambertian::new(Color::random() * Color::random()));
-                    world.add(Box::new(MovingSphere::new(
+                    world.add(Arc::new(MovingSphere::new(
                         center, center2, 0.0, 1.0, 0.2, mat,
                     )));
                 } else if choose_mat < 0.95 {
@@ -167,32 +169,32 @@ fn random_scene() -> HittableList {
                         Color::random_range(0.5, 1.0),
                         utils::random_float_range(0.0, 0.5),
                     ));
-                    world.add(Box::new(Sphere::new(center, 0.2, mat)));
+                    world.add(Arc::new(Sphere::new(center, 0.2, mat)));
                 } else {
                     // glass
                     let mat = Arc::new(Dielectric::new(1.5));
-                    world.add(Box::new(Sphere::new(center, 0.2, mat)));
+                    world.add(Arc::new(Sphere::new(center, 0.2, mat)));
                 }
             }
         }
     }
 
     let material1 = Arc::new(Dielectric::new(1.5));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Point3::new(0.0, 1.0, 0.0),
         1.0,
         material1,
     )));
 
     let material2 = Arc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Point3::new(-4.0, 1.0, 0.0),
         1.0,
         material2,
     )));
 
     let material3 = Arc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Point3::new(4.0, 1.0, 0.0),
         1.0,
         material3,

@@ -15,7 +15,13 @@ pub fn random_float() -> f64 {
 
 // Range [min,max)
 pub fn random_float_range(min: f64, max: f64) -> f64 {
+    debug_assert!(min < max);
     min + (max - min) * random_float()
+}
+
+pub fn random_int_range(min: i32, max: i32) -> i32 {
+    debug_assert!(min < max);
+    rand::random::<i32>() % (max - min) + min
 }
 
 pub fn clamp(value: f64, min: f64, max: f64) -> f64 {
