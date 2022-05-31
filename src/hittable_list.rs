@@ -16,6 +16,12 @@ impl HittableList {
         }
     }
 
+    pub fn single(object: Arc<dyn Hittable>) -> HittableList {
+        HittableList {
+            objects: vec![object],
+        }
+    }
+
     pub fn add(&mut self, object: Arc<dyn Hittable>) {
         self.objects.push(object);
     }

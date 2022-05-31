@@ -6,7 +6,7 @@ use crate::hittable_list::HittableList;
 use crate::material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
 use crate::moving_sphere::MovingSphere;
 use crate::sphere::Sphere;
-use crate::texture::{Checker, Noise};
+use crate::texture::{Checker, Image, Noise};
 use crate::utils;
 use crate::vec3::{Color, Point3, Vec3};
 
@@ -15,6 +15,7 @@ pub enum Scene {
     Random,
     TwoSpheres,
     TwoPerlinSpheres,
+    Earth,
 }
 
 pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera) {
@@ -41,6 +42,13 @@ pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera) {
         }
         Scene::TwoPerlinSpheres => {
             world = two_perlin_spheres();
+            look_from = Point3::new(13.0, 2.0, 3.0);
+            look_at = Point3::default();
+            vfov = 20.0;
+            aperture = 0.0;
+        }
+        Scene::Earth => {
+            world = earth();
             look_from = Point3::new(13.0, 2.0, 3.0);
             look_at = Point3::default();
             vfov = 20.0;
@@ -133,7 +141,7 @@ fn random_scene() -> HittableList {
         material3,
     )));
 
-    HittableList::new(&[Arc::new(Node::new_from_list(&world, 0.0, 1.0))])
+    HittableList::single(Arc::new(Node::new_from_list(&world, 0.0, 1.0)))
 }
 
 fn two_spheres() -> HittableList {
@@ -161,4 +169,12 @@ fn two_perlin_spheres() -> HittableList {
         )),
         Arc::new(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, mat)),
     ])
+}
+
+fn earth() -> HittableList {
+    let earth_texture = Box::new(Image::new("resources/earthmap.jpg"));
+    let earth_surface = Arc::new(Lambertian::new_with_texture(earth_texture));
+    let globe = Arc::new(Sphere::new(Point3::default(), 2.0, earth_surface));
+
+    HittableList::single(globe)
 }
