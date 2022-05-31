@@ -5,7 +5,7 @@ use crate::hittable_list::HittableList;
 use crate::material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
 use crate::moving_sphere::MovingSphere;
 use crate::sphere::Sphere;
-use crate::texture::Checker;
+use crate::texture::{Checker, Noise};
 use crate::utils;
 use crate::vec3::{Color, Point3, Vec3};
 
@@ -36,12 +36,19 @@ pub fn get(id: i32, aspect_ratio: f64) -> Scene {
             vfov = 20.0;
             aperture = 0.0;
         }
+        3 => {
+            world = two_perlin_spheres();
+            look_from = Point3::new(13.0, 2.0, 3.0);
+            look_at = Point3::default();
+            vfov = 20.0;
+            aperture = 0.0;
+        }
         _ => panic!("Unrecognized scene id {}", id),
     }
 
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
-    let cam = Camera::new_with_time(
+    let cam = Camera::new(
         look_from,
         look_at,
         vup,
@@ -59,7 +66,7 @@ pub fn get(id: i32, aspect_ratio: f64) -> Scene {
 fn random_scene() -> HittableList {
     let mut world = HittableList::default();
 
-    let checker = Box::new(Checker::new_with_color(
+    let checker = Box::new(Checker::new(
         Color::new(0.2, 0.3, 0.1),
         Color::new(0.9, 0.9, 0.9),
     ));
@@ -128,7 +135,7 @@ fn random_scene() -> HittableList {
 }
 
 fn two_spheres() -> HittableList {
-    let checker = Box::new(Checker::new_with_color(
+    let checker = Box::new(Checker::new(
         Color::new(0.2, 0.3, 0.1),
         Color::new(0.9, 0.9, 0.9),
     ));
@@ -137,5 +144,19 @@ fn two_spheres() -> HittableList {
     HittableList::new(&[
         Arc::new(Sphere::new(Point3::new(0.0, -10.0, 0.0), 10.0, mat.clone())),
         Arc::new(Sphere::new(Point3::new(0.0, 10.0, 0.0), 10.0, mat)),
+    ])
+}
+
+fn two_perlin_spheres() -> HittableList {
+    let perlin = Box::new(Noise::new(4.0));
+    let mat = Arc::new(Lambertian::new_with_texture(perlin));
+
+    HittableList::new(&[
+        Arc::new(Sphere::new(
+            Point3::new(0.0, -1000.0, 0.0),
+            1000.0,
+            mat.clone(),
+        )),
+        Arc::new(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, mat)),
     ])
 }

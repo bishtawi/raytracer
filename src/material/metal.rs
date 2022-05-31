@@ -28,7 +28,7 @@ impl Material for Metal {
         scattered: &mut Ray,
     ) -> bool {
         let reflected = r_in.direction().unit_vector().reflect(&rec.normal);
-        *scattered = Ray::new_with_time(
+        *scattered = Ray::new(
             rec.p,
             reflected + self.fuzz * Vec3::random_in_unit_sphere(),
             r_in.time(),

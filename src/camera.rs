@@ -18,30 +18,8 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(
-        look_from: Point3,
-        look_at: Point3,
-        vup: Vec3,
-        vfov: f64, // vertical field-of-view in degrees
-        aspect_ratio: f64,
-        aperture: f64,
-        focus_dist: f64,
-    ) -> Camera {
-        Camera::new_with_time(
-            look_from,
-            look_at,
-            vup,
-            vfov,
-            aspect_ratio,
-            aperture,
-            focus_dist,
-            0.0,
-            0.0,
-        )
-    }
-
     #[allow(clippy::too_many_arguments)] // Constructor
-    pub fn new_with_time(
+    pub fn new(
         look_from: Point3,
         look_at: Point3,
         vup: Vec3,
@@ -85,7 +63,7 @@ impl Camera {
         let rd = self.lens_radius * Vec3::random_in_unit_disk();
         let offset = self.u * rd.x() + self.v * rd.y();
 
-        Ray::new_with_time(
+        Ray::new(
             self.origin + offset,
             self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
             utils::random_float_range(self.time_start, self.time_end),

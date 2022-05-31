@@ -8,15 +8,7 @@ pub struct Ray {
 }
 
 impl Ray {
-    pub fn new(orig: Point3, dir: Vec3) -> Ray {
-        Ray {
-            orig,
-            dir,
-            time: 0.0,
-        }
-    }
-
-    pub fn new_with_time(orig: Point3, dir: Vec3, time: f64) -> Ray {
+    pub fn new(orig: Point3, dir: Vec3, time: f64) -> Ray {
         Ray { orig, dir, time }
     }
 

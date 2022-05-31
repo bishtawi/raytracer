@@ -8,6 +8,7 @@ mod hittable;
 mod hittable_list;
 mod material;
 mod moving_sphere;
+mod perlin;
 mod ray;
 mod scene;
 mod sphere;
@@ -37,7 +38,7 @@ fn main() -> Result<(), std::io::Error> {
 
     // Scene
 
-    let scene = scene::get(2, aspect_ratio);
+    let scene = scene::get(3, aspect_ratio);
 
     // Render
 

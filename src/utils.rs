@@ -1,3 +1,5 @@
+use rand::Rng;
+
 pub fn float_to_int_truncate(num: f64) -> i32 {
     #[allow(clippy::cast_possible_truncation)] // Truncation is fine
     let integer = num as i32;
@@ -19,9 +21,10 @@ pub fn random_float_range(min: f64, max: f64) -> f64 {
     min + (max - min) * random_float()
 }
 
-pub fn random_int_range(min: i32, max: i32) -> i32 {
+// Range [min,max]
+pub fn random_int(min: i32, max: i32) -> i32 {
     debug_assert!(min < max);
-    rand::random::<i32>() % (max - min) + min
+    rand::thread_rng().gen_range(min..=max)
 }
 
 pub fn clamp(value: f64, min: f64, max: f64) -> f64 {

@@ -25,7 +25,7 @@ impl Node {
         time0: f64,
         time1: f64,
     ) -> Node {
-        let axis = utils::random_int_range(0, 2);
+        let axis = utils::random_int(0, 2);
         let comparator = match axis {
             0 => box_x_compare,
             1 => box_y_compare,
