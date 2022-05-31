@@ -38,7 +38,7 @@ fn main() -> Result<(), std::io::Error> {
 
     // Scene
 
-    let scene = scene::get(3, aspect_ratio);
+    let (world, cam) = scene::get(&scene::Scene::Random, aspect_ratio);
 
     // Render
 
@@ -54,8 +54,8 @@ fn main() -> Result<(), std::io::Error> {
                         let u = (f64::from(i) + utils::random_float()) / f64::from(image_width - 1);
                         let v =
                             (f64::from(j) + utils::random_float()) / f64::from(image_height - 1);
-                        let r = scene.cam.get_ray(u, v);
-                        pixel_color += &ray_color(&r, &scene.world, max_depth);
+                        let r = cam.get_ray(u, v);
+                        pixel_color += &ray_color(&r, &world, max_depth);
                     }
                     Color::new(
                         (pixel_color.x() * scale).sqrt(),

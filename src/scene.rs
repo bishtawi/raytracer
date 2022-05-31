@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::bvh::Node;
 use crate::camera::Camera;
 use crate::hittable_list::HittableList;
 use crate::material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
@@ -9,41 +10,42 @@ use crate::texture::{Checker, Noise};
 use crate::utils;
 use crate::vec3::{Color, Point3, Vec3};
 
-pub struct Scene {
-    pub world: HittableList,
-    pub cam: Camera,
+#[allow(dead_code)]
+pub enum Scene {
+    Random,
+    TwoSpheres,
+    TwoPerlinSpheres,
 }
 
-pub fn get(id: i32, aspect_ratio: f64) -> Scene {
+pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera) {
     let world;
     let look_from;
     let look_at;
     let vfov;
     let aperture;
 
-    match id {
-        1 => {
+    match scene {
+        Scene::Random => {
             world = random_scene();
             look_from = Point3::new(13.0, 2.0, 3.0);
             look_at = Point3::default();
             vfov = 20.0;
             aperture = 0.1;
         }
-        2 => {
+        Scene::TwoSpheres => {
             world = two_spheres();
             look_from = Point3::new(13.0, 2.0, 3.0);
             look_at = Point3::default();
             vfov = 20.0;
             aperture = 0.0;
         }
-        3 => {
+        Scene::TwoPerlinSpheres => {
             world = two_perlin_spheres();
             look_from = Point3::new(13.0, 2.0, 3.0);
             look_at = Point3::default();
             vfov = 20.0;
             aperture = 0.0;
         }
-        _ => panic!("Unrecognized scene id {}", id),
     }
 
     let vup = Vec3::new(0.0, 1.0, 0.0);
@@ -60,7 +62,7 @@ pub fn get(id: i32, aspect_ratio: f64) -> Scene {
         1.0,
     );
 
-    Scene { world, cam }
+    (world, cam)
 }
 
 fn random_scene() -> HittableList {
@@ -131,7 +133,7 @@ fn random_scene() -> HittableList {
         material3,
     )));
 
-    world
+    HittableList::new(&[Arc::new(Node::new_from_list(&world, 0.0, 1.0))])
 }
 
 fn two_spheres() -> HittableList {
