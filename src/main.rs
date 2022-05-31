@@ -9,25 +9,21 @@ mod hittable_list;
 mod material;
 mod moving_sphere;
 mod ray;
+mod scene;
 mod sphere;
+mod texture;
 mod utils;
 mod vec3;
 
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
-use std::sync::Arc;
 
 use rayon::prelude::*;
 
-use camera::Camera;
 use hittable::Hittable;
-use hittable_list::HittableList;
-use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
-use moving_sphere::MovingSphere;
 use ray::Ray;
-use sphere::Sphere;
-use vec3::{Color, Point3, Vec3};
+use vec3::Color;
 
 fn main() -> Result<(), std::io::Error> {
     // Image
@@ -39,29 +35,9 @@ fn main() -> Result<(), std::io::Error> {
     let max_depth = 50;
     let scale = 1.0 / f64::from(samples_per_pixel);
 
-    // World
+    // Scene
 
-    let world = random_scene();
-
-    // Camera
-
-    let look_from = Point3::new(13.0, 2.0, 3.0);
-    let look_at = Point3::new(0.0, 0.0, 0.0);
-    let vup = Vec3::new(0.0, 1.0, 0.0);
-    let vfov = 20.0;
-    let aperture = 0.1;
-    let dist_to_focus = 10.0;
-    let cam = Camera::new_with_time(
-        look_from,
-        look_at,
-        vup,
-        vfov,
-        aspect_ratio,
-        aperture,
-        dist_to_focus,
-        0.0,
-        1.0,
-    );
+    let scene = scene::get(2, aspect_ratio);
 
     // Render
 
@@ -77,8 +53,8 @@ fn main() -> Result<(), std::io::Error> {
                         let u = (f64::from(i) + utils::random_float()) / f64::from(image_width - 1);
                         let v =
                             (f64::from(j) + utils::random_float()) / f64::from(image_height - 1);
-                        let r = cam.get_ray(u, v);
-                        pixel_color += &ray_color(&r, &world, max_depth);
+                        let r = scene.cam.get_ray(u, v);
+                        pixel_color += &ray_color(&r, &scene.world, max_depth);
                     }
                     Color::new(
                         (pixel_color.x() * scale).sqrt(),
@@ -134,71 +110,4 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     let unit_direction = r.direction().unit_vector();
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Color::new_single(1.0) + t * Color::new(0.5, 0.7, 1.0)
-}
-
-fn random_scene() -> HittableList {
-    let mut world = HittableList::default();
-
-    let ground_material = Arc::new(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
-    world.add(Arc::new(Sphere::new(
-        Point3::new(0.0, -1000.0, 0.0),
-        1000.0,
-        ground_material,
-    )));
-
-    for a in -11..11 {
-        for b in -11..11 {
-            let choose_mat = utils::random_float();
-            let center = Point3::new(
-                f64::from(a) + 0.9 * utils::random_float(),
-                0.2,
-                f64::from(b) + 0.9 * utils::random_float(),
-            );
-
-            if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                if choose_mat < 0.8 {
-                    // diffuse
-                    let center2 = center + Vec3::new(0.0, utils::random_float_range(0.0, 0.5), 0.0);
-                    let mat = Arc::new(Lambertian::new(Color::random() * Color::random()));
-                    world.add(Arc::new(MovingSphere::new(
-                        center, center2, 0.0, 1.0, 0.2, mat,
-                    )));
-                } else if choose_mat < 0.95 {
-                    // metal
-                    let mat = Arc::new(Metal::new(
-                        Color::random_range(0.5, 1.0),
-                        utils::random_float_range(0.0, 0.5),
-                    ));
-                    world.add(Arc::new(Sphere::new(center, 0.2, mat)));
-                } else {
-                    // glass
-                    let mat = Arc::new(Dielectric::new(1.5));
-                    world.add(Arc::new(Sphere::new(center, 0.2, mat)));
-                }
-            }
-        }
-    }
-
-    let material1 = Arc::new(Dielectric::new(1.5));
-    world.add(Arc::new(Sphere::new(
-        Point3::new(0.0, 1.0, 0.0),
-        1.0,
-        material1,
-    )));
-
-    let material2 = Arc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
-    world.add(Arc::new(Sphere::new(
-        Point3::new(-4.0, 1.0, 0.0),
-        1.0,
-        material2,
-    )));
-
-    let material3 = Arc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
-    world.add(Arc::new(Sphere::new(
-        Point3::new(4.0, 1.0, 0.0),
-        1.0,
-        material3,
-    )));
-
-    world
 }

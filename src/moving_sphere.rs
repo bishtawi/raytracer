@@ -4,6 +4,7 @@ use crate::aabb::Aabb;
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::Material;
 use crate::ray::Ray;
+use crate::sphere;
 use crate::vec3::{Point3, Vec3};
 
 pub struct MovingSphere {
@@ -64,15 +65,20 @@ impl Hittable for MovingSphere {
             }
         }
 
+        let point = r.at(root);
+        let outward_normal = (point - self.center(r.time())) / self.radius;
+        let coords = sphere::get_sphere_uv(&outward_normal);
+
         let mut rec = HitRecord {
-            p: r.at(root),
+            p: point,
             t: root,
             material: self.material.clone(),
             normal: Vec3::default(),
             front_face: false,
+            u: coords.0,
+            v: coords.1,
         };
 
-        let outward_normal = (rec.p - self.center(r.time())) / self.radius;
         rec.set_face_normal(r, &outward_normal);
 
         Some(rec)

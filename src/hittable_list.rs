@@ -10,6 +10,12 @@ pub struct HittableList {
 }
 
 impl HittableList {
+    pub fn new(objects: &[Arc<dyn Hittable>]) -> HittableList {
+        HittableList {
+            objects: objects.into(),
+        }
+    }
+
     pub fn add(&mut self, object: Arc<dyn Hittable>) {
         self.objects.push(object);
     }

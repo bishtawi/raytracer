@@ -45,15 +45,20 @@ impl Hittable for Sphere {
             }
         }
 
+        let point = r.at(root);
+        let outward_normal = (point - self.center) / self.radius;
+        let coords = get_sphere_uv(&outward_normal);
+
         let mut rec = HitRecord {
-            p: r.at(root),
+            p: point,
             t: root,
             material: self.material.clone(),
             normal: Vec3::default(),
             front_face: false,
+            u: coords.0,
+            v: coords.1,
         };
 
-        let outward_normal = (rec.p - self.center) / self.radius;
         rec.set_face_normal(r, &outward_normal);
 
         Some(rec)
@@ -65,4 +70,13 @@ impl Hittable for Sphere {
             self.center + Vec3::new_single(self.radius),
         ))
     }
+}
+
+pub fn get_sphere_uv(p: &Point3) -> (f64, f64) {
+    let theta = (-p.y()).acos();
+    let phi = (-p.z()).atan2(p.x()) + std::f64::consts::PI;
+    (
+        phi / (2.0 * std::f64::consts::PI),
+        theta / std::f64::consts::PI,
+    )
 }
