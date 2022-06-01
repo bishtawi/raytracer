@@ -2,7 +2,7 @@ use super::Material;
 use crate::{
     hittable::HitRecord,
     ray::Ray,
-    texture::{SolidColor, Texture},
+    texture::{solid_color::SolidColor, Texture},
     vec3::{Color, Vec3},
 };
 

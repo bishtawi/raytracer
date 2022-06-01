@@ -1,21 +1,17 @@
 use std::{cmp::Ordering, sync::Arc};
 
-use crate::{
-    aabb::Aabb,
-    hittable::{HitRecord, Hittable},
-    hittable_list::HittableList,
-    utils,
-};
+use super::{htlist::HittableList, HitRecord, Hittable};
+use crate::{aabb::Aabb, utils};
 
-pub struct Node {
+pub struct BVHNode {
     left: Arc<dyn Hittable>,
     right: Arc<dyn Hittable>,
     bbox: Aabb,
 }
 
-impl Node {
-    pub fn new_from_list(list: &HittableList, time0: f64, time1: f64) -> Node {
-        Node::new_from_array(&list.objects, 0, list.objects.len(), time0, time1)
+impl BVHNode {
+    pub fn new_from_list(list: &HittableList, time0: f64, time1: f64) -> BVHNode {
+        BVHNode::new_from_array(&list.objects, 0, list.objects.len(), time0, time1)
     }
 
     pub fn new_from_array(
@@ -24,7 +20,7 @@ impl Node {
         end: usize,
         time0: f64,
         time1: f64,
-    ) -> Node {
+    ) -> BVHNode {
         let axis = utils::random_int(0, 2);
         let comparator = match axis {
             0 => box_x_compare,
@@ -55,8 +51,8 @@ impl Node {
             objects.sort_by(comparator);
 
             let mid = start + span / 2;
-            left = Arc::new(Node::new_from_array(&objects, start, mid, time0, time1));
-            right = Arc::new(Node::new_from_array(&objects, mid, end, time0, time1));
+            left = Arc::new(BVHNode::new_from_array(&objects, start, mid, time0, time1));
+            right = Arc::new(BVHNode::new_from_array(&objects, mid, end, time0, time1));
         }
 
         let box_left = left
@@ -68,11 +64,11 @@ impl Node {
 
         let bbox = Aabb::surrounding_box(&box_left, &box_right);
 
-        Node { left, right, bbox }
+        BVHNode { left, right, bbox }
     }
 }
 
-impl Hittable for Node {
+impl Hittable for BVHNode {
     fn hit(&self, r: &crate::ray::Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         if !self.bbox.hit(r, t_min, t_max) {
             return None;

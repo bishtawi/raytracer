@@ -2,16 +2,12 @@
 #![deny(clippy::all, clippy::pedantic)]
 
 mod aabb;
-mod bvh;
 mod camera;
 mod hittable;
-mod hittable_list;
 mod material;
-mod moving_sphere;
 mod perlin;
 mod ray;
 mod scene;
-mod sphere;
 mod texture;
 mod utils;
 mod vec3;
@@ -29,16 +25,16 @@ use vec3::Color;
 fn main() -> Result<(), std::io::Error> {
     // Image
 
-    let aspect_ratio = 16.0 / 9.0;
-    let image_width = 400;
+    let aspect_ratio = 1.0;
+    let image_width = 600;
     let image_height = utils::float_to_int_truncate(f64::from(image_width) / aspect_ratio);
-    let samples_per_pixel = 100;
+    let samples_per_pixel = 200;
     let max_depth = 50;
     let scale = 1.0 / f64::from(samples_per_pixel);
 
     // Scene
 
-    let (world, cam) = scene::get(&scene::Scene::Random, aspect_ratio);
+    let (world, cam, background) = scene::get(&scene::Scene::CornellBox, aspect_ratio);
 
     // Render
 
@@ -47,7 +43,6 @@ fn main() -> Result<(), std::io::Error> {
         .rev()
         .map(|j| {
             (0..image_width)
-                .into_par_iter()
                 .map(|i| {
                     let mut pixel_color = Color::default();
                     for _ in 0..samples_per_pixel {
@@ -55,7 +50,7 @@ fn main() -> Result<(), std::io::Error> {
                         let v =
                             (f64::from(j) + utils::random_float()) / f64::from(image_height - 1);
                         let r = cam.get_ray(u, v);
-                        pixel_color += &ray_color(&r, &world, max_depth);
+                        pixel_color += &ray_color(&r, &background, &world, max_depth);
                     }
                     Color::new(
                         (pixel_color.x() * scale).sqrt(),
@@ -90,7 +85,7 @@ fn write_color(writer: &mut BufWriter<File>, pixel_color: &Color) -> Result<(), 
     writeln!(writer, "{} {} {}", ir, ig, ib)
 }
 
-fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
+fn ray_color(r: &Ray, background: &Color, world: &dyn Hittable, depth: i32) -> Color {
     if depth <= 0 {
         return Color::default();
     }
@@ -98,17 +93,17 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     if let Some(rec) = world.hit(r, 0.001, f64::INFINITY) {
         let mut scattered = Ray::default();
         let mut attenuation = Color::default();
+        let emitted = rec.material.emitted(rec.u, rec.v, &rec.p);
 
-        if rec
+        if !rec
             .material
             .scatter(r, &rec, &mut attenuation, &mut scattered)
         {
-            return attenuation * ray_color(&scattered, world, depth - 1);
+            return emitted;
         }
 
-        return Color::default();
+        emitted + attenuation * ray_color(&scattered, background, world, depth - 1)
+    } else {
+        *background
     }
-    let unit_direction = r.direction().unit_vector();
-    let t = 0.5 * (unit_direction.y() + 1.0);
-    (1.0 - t) * Color::new_single(1.0) + t * Color::new(0.5, 0.7, 1.0)
 }

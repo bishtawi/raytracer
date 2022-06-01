@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
+use super::{HitRecord, Hittable};
 use crate::aabb::Aabb;
-use crate::hittable::{HitRecord, Hittable};
 use crate::ray::Ray;
 
 #[derive(Default)]

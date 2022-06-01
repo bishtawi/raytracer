@@ -1,12 +1,18 @@
 use std::sync::Arc;
 
-use crate::bvh::Node;
 use crate::camera::Camera;
-use crate::hittable_list::HittableList;
+use crate::hittable::bvh_node::BVHNode;
+use crate::hittable::htlist::HittableList;
+use crate::hittable::moving_sphere::MovingSphere;
+use crate::hittable::sphere::Sphere;
+use crate::hittable::xyrect::XYRect;
+use crate::hittable::xzrect::XZRect;
+use crate::hittable::yzrect::YZRect;
+use crate::material::diffuse_light::DiffuseLight;
 use crate::material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
-use crate::moving_sphere::MovingSphere;
-use crate::sphere::Sphere;
-use crate::texture::{Checker, Image, Noise};
+use crate::texture::checker::Checker;
+use crate::texture::image::Image;
+use crate::texture::noise::Noise;
 use crate::utils;
 use crate::vec3::{Color, Point3, Vec3};
 
@@ -16,14 +22,17 @@ pub enum Scene {
     TwoSpheres,
     TwoPerlinSpheres,
     Earth,
+    SimpleLight,
+    CornellBox,
 }
 
-pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera) {
+pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera, Color) {
     let world;
     let look_from;
     let look_at;
     let vfov;
     let aperture;
+    let background;
 
     match scene {
         Scene::Random => {
@@ -32,6 +41,7 @@ pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera) {
             look_at = Point3::default();
             vfov = 20.0;
             aperture = 0.1;
+            background = Color::new(0.70, 0.80, 1.00);
         }
         Scene::TwoSpheres => {
             world = two_spheres();
@@ -39,6 +49,7 @@ pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera) {
             look_at = Point3::default();
             vfov = 20.0;
             aperture = 0.0;
+            background = Color::new(0.70, 0.80, 1.00);
         }
         Scene::TwoPerlinSpheres => {
             world = two_perlin_spheres();
@@ -46,12 +57,30 @@ pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera) {
             look_at = Point3::default();
             vfov = 20.0;
             aperture = 0.0;
+            background = Color::new(0.70, 0.80, 1.00);
         }
         Scene::Earth => {
             world = earth();
             look_from = Point3::new(13.0, 2.0, 3.0);
             look_at = Point3::default();
             vfov = 20.0;
+            aperture = 0.0;
+            background = Color::new(0.70, 0.80, 1.00);
+        }
+        Scene::SimpleLight => {
+            world = simple_light();
+            background = Color::default();
+            look_from = Point3::new(26.0, 3.0, 6.0);
+            look_at = Point3::new(0.0, 2.0, 0.0);
+            vfov = 20.0;
+            aperture = 0.0;
+        }
+        Scene::CornellBox => {
+            world = cornell_box();
+            background = Color::default();
+            look_from = Point3::new(278.0, 278.0, -800.0);
+            look_at = Point3::new(278.0, 278.0, 0.0);
+            vfov = 40.0;
             aperture = 0.0;
         }
     }
@@ -70,7 +99,7 @@ pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera) {
         1.0,
     );
 
-    (world, cam)
+    (world, cam, background)
 }
 
 fn random_scene() -> HittableList {
@@ -141,7 +170,7 @@ fn random_scene() -> HittableList {
         material3,
     )));
 
-    HittableList::single(Arc::new(Node::new_from_list(&world, 0.0, 1.0)))
+    HittableList::single(Arc::new(BVHNode::new_from_list(&world, 0.0, 1.0)))
 }
 
 fn two_spheres() -> HittableList {
@@ -177,4 +206,42 @@ fn earth() -> HittableList {
     let globe = Arc::new(Sphere::new(Point3::default(), 2.0, earth_surface));
 
     HittableList::single(globe)
+}
+
+fn simple_light() -> HittableList {
+    let perlin = Box::new(Noise::new(4.0));
+    let mat = Arc::new(Lambertian::new_with_texture(perlin));
+
+    HittableList::new(&[
+        Arc::new(Sphere::new(
+            Point3::new(0.0, -1000.0, 0.0),
+            1000.0,
+            mat.clone(),
+        )),
+        Arc::new(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, mat)),
+        Arc::new(XYRect::new(
+            3.0,
+            5.0,
+            1.0,
+            3.0,
+            -2.0,
+            Arc::new(DiffuseLight::new(Color::new(4.0, 4.0, 4.0))),
+        )),
+    ])
+}
+
+fn cornell_box() -> HittableList {
+    let red = Arc::new(Lambertian::new(Color::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Color::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Color::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new(Color::new(15.0, 15.0, 15.0)));
+
+    HittableList::new(&[
+        Arc::new(YZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, green)),
+        Arc::new(YZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, red)),
+        Arc::new(XZRect::new(213.0, 343.0, 227.0, 332.0, 554.0, light)),
+        Arc::new(XZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, white.clone())),
+        Arc::new(XZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())),
+        Arc::new(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white)),
+    ])
 }

@@ -1,30 +1,50 @@
 use std::sync::Arc;
 
+use super::sphere;
+use super::{HitRecord, Hittable};
 use crate::aabb::Aabb;
-use crate::hittable::{HitRecord, Hittable};
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
 
-pub struct Sphere {
-    center: Point3,
+pub struct MovingSphere {
+    center_start: Point3,
+    center_end: Point3,
+    time_start: f64,
+    time_end: f64,
     radius: f64,
     material: Arc<dyn Material>,
 }
 
-impl Sphere {
-    pub fn new(center: Point3, radius: f64, material: Arc<dyn Material>) -> Sphere {
-        Sphere {
-            center,
+impl MovingSphere {
+    pub fn new(
+        center_start: Point3,
+        center_end: Point3,
+        time_start: f64,
+        time_end: f64,
+        radius: f64,
+        material: Arc<dyn Material>,
+    ) -> MovingSphere {
+        MovingSphere {
+            center_start,
+            center_end,
+            time_start,
+            time_end,
             radius,
             material,
         }
     }
+
+    fn center(&self, time: f64) -> Point3 {
+        self.center_start
+            + ((time - self.time_start) / (self.time_end - self.time_start))
+                * (self.center_end - self.center_start)
+    }
 }
 
-impl Hittable for Sphere {
+impl Hittable for MovingSphere {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let oc = r.origin() - &self.center;
+        let oc = r.origin() - &self.center(r.time());
         let a = r.direction().length_squared();
         let half_b = oc.dot(r.direction());
         let c = oc.length_squared() - self.radius * self.radius;
@@ -46,8 +66,8 @@ impl Hittable for Sphere {
         }
 
         let point = r.at(root);
-        let outward_normal = (point - self.center) / self.radius;
-        let coords = get_sphere_uv(&outward_normal);
+        let outward_normal = (point - self.center(r.time())) / self.radius;
+        let coords = sphere::get_sphere_uv(&outward_normal);
 
         let mut rec = HitRecord {
             p: point,
@@ -64,19 +84,10 @@ impl Hittable for Sphere {
         Some(rec)
     }
 
-    fn bounding_box(&self, _time0: f64, _time1: f64) -> Option<Aabb> {
-        Some(Aabb::new(
-            self.center - Vec3::new_single(self.radius),
-            self.center + Vec3::new_single(self.radius),
-        ))
+    fn bounding_box(&self, time0: f64, time1: f64) -> Option<Aabb> {
+        let rad = Vec3::new_single(self.radius);
+        let box0 = Aabb::new(self.center(time0) - rad, self.center(time0) + rad);
+        let box1 = Aabb::new(self.center(time1) - rad, self.center(time1) + rad);
+        Some(Aabb::surrounding_box(&box0, &box1))
     }
-}
-
-pub fn get_sphere_uv(p: &Point3) -> (f64, f64) {
-    let theta = (-p.y()).acos();
-    let phi = (-p.z()).atan2(p.x()) + std::f64::consts::PI;
-    (
-        phi / (2.0 * std::f64::consts::PI),
-        theta / std::f64::consts::PI,
-    )
 }

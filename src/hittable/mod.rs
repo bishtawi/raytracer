@@ -1,5 +1,13 @@
 use std::sync::Arc;
 
+pub mod bvh_node;
+pub mod htlist;
+pub mod moving_sphere;
+pub mod sphere;
+pub mod xyrect;
+pub mod xzrect;
+pub mod yzrect;
+
 use crate::aabb::Aabb;
 use crate::material::Material;
 use crate::ray::Ray;
