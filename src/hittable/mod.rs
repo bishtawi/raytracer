@@ -1,9 +1,12 @@
 use std::sync::Arc;
 
+pub mod b0x;
 pub mod bvh_node;
 pub mod htlist;
 pub mod moving_sphere;
+pub mod rotate_y;
 pub mod sphere;
+pub mod translate;
 pub mod xyrect;
 pub mod xzrect;
 pub mod yzrect;

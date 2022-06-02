@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
 use crate::camera::Camera;
+use crate::hittable::b0x::B0x;
 use crate::hittable::bvh_node::BVHNode;
 use crate::hittable::htlist::HittableList;
 use crate::hittable::moving_sphere::MovingSphere;
+use crate::hittable::rotate_y::RotateY;
 use crate::hittable::sphere::Sphere;
+use crate::hittable::translate::Translate;
 use crate::hittable::xyrect::XYRect;
 use crate::hittable::xzrect::XZRect;
 use crate::hittable::yzrect::YZRect;
@@ -242,6 +245,28 @@ fn cornell_box() -> HittableList {
         Arc::new(XZRect::new(213.0, 343.0, 227.0, 332.0, 554.0, light)),
         Arc::new(XZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, white.clone())),
         Arc::new(XZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())),
-        Arc::new(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white)),
+        Arc::new(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())),
+        Arc::new(Translate::new(
+            Box::new(RotateY::new(
+                Box::new(B0x::new(
+                    Point3::new(0.0, 0.0, 0.0),
+                    Point3::new(165.0, 330.0, 165.0),
+                    white.clone(),
+                )),
+                15.0,
+            )),
+            Vec3::new(265.0, 0.0, 295.0),
+        )),
+        Arc::new(Translate::new(
+            Box::new(RotateY::new(
+                Box::new(B0x::new(
+                    Point3::new(0.0, 0.0, 0.0),
+                    Point3::new(165.0, 165.0, 165.0),
+                    white,
+                )),
+                -18.0,
+            )),
+            Vec3::new(130.0, 0.0, 65.0),
+        )),
     ])
 }
