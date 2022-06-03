@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 pub mod b0x;
 pub mod bvh_node;
+pub mod constant_medium;
 pub mod htlist;
 pub mod moving_sphere;
 pub mod rotate_y;

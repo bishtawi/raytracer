@@ -34,7 +34,7 @@ fn main() -> Result<(), std::io::Error> {
 
     // Scene
 
-    let (world, cam, background) = scene::get(&scene::Scene::CornellBox, aspect_ratio);
+    let (world, cam, background) = scene::get(&scene::Scene::CornellSmoke, aspect_ratio);
 
     // Render
 

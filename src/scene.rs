@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::camera::Camera;
 use crate::hittable::b0x::B0x;
 use crate::hittable::bvh_node::BVHNode;
+use crate::hittable::constant_medium::ConstantMedium;
 use crate::hittable::htlist::HittableList;
 use crate::hittable::moving_sphere::MovingSphere;
 use crate::hittable::rotate_y::RotateY;
@@ -27,6 +28,7 @@ pub enum Scene {
     Earth,
     SimpleLight,
     CornellBox,
+    CornellSmoke,
 }
 
 pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera, Color) {
@@ -80,6 +82,14 @@ pub fn get(scene: &Scene, aspect_ratio: f64) -> (HittableList, Camera, Color) {
         }
         Scene::CornellBox => {
             world = cornell_box();
+            background = Color::default();
+            look_from = Point3::new(278.0, 278.0, -800.0);
+            look_at = Point3::new(278.0, 278.0, 0.0);
+            vfov = 40.0;
+            aperture = 0.0;
+        }
+        Scene::CornellSmoke => {
+            world = cornell_smoke();
             background = Color::default();
             look_from = Point3::new(278.0, 278.0, -800.0);
             look_at = Point3::new(278.0, 278.0, 0.0);
@@ -267,6 +277,52 @@ fn cornell_box() -> HittableList {
                 -18.0,
             )),
             Vec3::new(130.0, 0.0, 65.0),
+        )),
+    ])
+}
+
+fn cornell_smoke() -> HittableList {
+    let red = Arc::new(Lambertian::new(Color::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Color::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Color::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new(Color::new(7.0, 7.0, 7.0)));
+
+    HittableList::new(&[
+        Arc::new(YZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, green)),
+        Arc::new(YZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, red)),
+        Arc::new(XZRect::new(113.0, 443.0, 127.0, 432.0, 554.0, light)),
+        Arc::new(XZRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())),
+        Arc::new(XZRect::new(0.0, 555.0, 0.0, 555.0, 0.0, white.clone())),
+        Arc::new(XYRect::new(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())),
+        Arc::new(ConstantMedium::new(
+            Box::new(Translate::new(
+                Box::new(RotateY::new(
+                    Box::new(B0x::new(
+                        Point3::new(0.0, 0.0, 0.0),
+                        Point3::new(165.0, 330.0, 165.0),
+                        white.clone(),
+                    )),
+                    15.0,
+                )),
+                Vec3::new(265.0, 0.0, 295.0),
+            )),
+            0.01,
+            Color::default(),
+        )),
+        Arc::new(ConstantMedium::new(
+            Box::new(Translate::new(
+                Box::new(RotateY::new(
+                    Box::new(B0x::new(
+                        Point3::new(0.0, 0.0, 0.0),
+                        Point3::new(165.0, 165.0, 165.0),
+                        white,
+                    )),
+                    -18.0,
+                )),
+                Vec3::new(130.0, 0.0, 65.0),
+            )),
+            0.01,
+            Color::new(1.0, 1.0, 1.0),
         )),
     ])
 }

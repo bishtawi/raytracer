@@ -16,12 +16,10 @@ impl DiffuseLight {
         }
     }
 
-    /* Enable once needed
+    #[allow(dead_code)]
     pub fn new_texture(texture: Box<dyn Texture>) -> DiffuseLight {
-        DiffuseLight {
-            emit: texture,
-        }
-    }*/
+        DiffuseLight { emit: texture }
+    }
 }
 
 impl Material for DiffuseLight {

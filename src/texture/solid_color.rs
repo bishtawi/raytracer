@@ -10,12 +10,12 @@ impl SolidColor {
         SolidColor { color }
     }
 
-    /* Enable once needed
+    #[allow(dead_code)]
     pub fn new_rgb(red: f64, green: f64, blue: f64) -> SolidColor {
         SolidColor {
             color: Color::new(red, green, blue),
         }
-    }*/
+    }
 }
 
 impl Texture for SolidColor {
