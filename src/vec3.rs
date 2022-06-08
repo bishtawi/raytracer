@@ -6,6 +6,12 @@ use crate::utils;
 pub type Color = Vec3;
 pub type Point3 = Vec3;
 
+pub enum Axis {
+    X,
+    Y,
+    Z,
+}
+
 #[derive(Default, Copy, Clone)]
 pub struct Vec3 {
     elements: [f64; 3],
@@ -34,6 +40,14 @@ impl Vec3 {
 
     pub fn z(&self) -> f64 {
         self.elements[2]
+    }
+
+    pub fn axis(&self, axis: &Axis) -> f64 {
+        match axis {
+            Axis::X => self.x(),
+            Axis::Y => self.y(),
+            Axis::Z => self.z(),
+        }
     }
 
     pub fn length(&self) -> f64 {

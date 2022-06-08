@@ -23,39 +23,29 @@ use ray::Ray;
 use vec3::Color;
 
 fn main() -> Result<(), std::io::Error> {
-    // Image
+    let scene = scene::get(&scene::Type::Final);
 
-    let aspect_ratio = 1.0;
-    let image_width = 600;
-    let image_height = utils::float_to_int_truncate(f64::from(image_width) / aspect_ratio);
-    let samples_per_pixel = 200;
-    let max_depth = 50;
-    let scale = 1.0 / f64::from(samples_per_pixel);
-
-    // Scene
-
-    let (world, cam, background) = scene::get(&scene::Scene::CornellSmoke, aspect_ratio);
-
-    // Render
-
-    let pixels: Vec<Vec<Color>> = (0..image_height)
+    let pixels: Vec<Vec<Color>> = (0..scene.image_height)
         .into_par_iter()
         .rev()
         .map(|j| {
-            (0..image_width)
+            (0..scene.image_width)
+                .into_par_iter()
                 .map(|i| {
                     let mut pixel_color = Color::default();
-                    for _ in 0..samples_per_pixel {
-                        let u = (f64::from(i) + utils::random_float()) / f64::from(image_width - 1);
-                        let v =
-                            (f64::from(j) + utils::random_float()) / f64::from(image_height - 1);
-                        let r = cam.get_ray(u, v);
-                        pixel_color += &ray_color(&r, &background, &world, max_depth);
+                    for _ in 0..scene.samples_per_pixel {
+                        let u = (f64::from(i) + utils::random_float())
+                            / f64::from(scene.image_width - 1);
+                        let v = (f64::from(j) + utils::random_float())
+                            / f64::from(scene.image_height - 1);
+                        let r = scene.cam.get_ray(u, v);
+                        pixel_color +=
+                            &ray_color(&r, &scene.background, &scene.world, scene.max_depth);
                     }
                     Color::new(
-                        (pixel_color.x() * scale).sqrt(),
-                        (pixel_color.y() * scale).sqrt(),
-                        (pixel_color.z() * scale).sqrt(),
+                        (pixel_color.x() * scene.scale).sqrt(),
+                        (pixel_color.y() * scene.scale).sqrt(),
+                        (pixel_color.z() * scene.scale).sqrt(),
                     )
                 })
                 .collect()
@@ -66,7 +56,11 @@ fn main() -> Result<(), std::io::Error> {
     let file = File::create(&path)?;
     let mut buf_writer = BufWriter::new(file);
 
-    writeln!(buf_writer, "P3\n{} {}\n255", image_width, image_height)?;
+    writeln!(
+        buf_writer,
+        "P3\n{} {}\n255",
+        scene.image_width, scene.image_height
+    )?;
 
     for v in pixels {
         for p in v {

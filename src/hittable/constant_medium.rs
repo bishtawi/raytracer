@@ -10,13 +10,13 @@ use crate::{
 use super::{HitRecord, Hittable};
 
 pub struct ConstantMedium {
-    boundary: Box<dyn Hittable>,
+    boundary: Arc<dyn Hittable>,
     phase_func: Arc<dyn Material>,
     neg_inv_density: f64,
 }
 
 impl ConstantMedium {
-    pub fn new(boundary: Box<dyn Hittable>, density: f64, color: Color) -> ConstantMedium {
+    pub fn new(boundary: Arc<dyn Hittable>, density: f64, color: Color) -> ConstantMedium {
         ConstantMedium {
             boundary,
             neg_inv_density: -1.0 / density,
@@ -26,7 +26,7 @@ impl ConstantMedium {
 
     #[allow(dead_code)]
     pub fn new_texture(
-        boundary: Box<dyn Hittable>,
+        boundary: Arc<dyn Hittable>,
         density: f64,
         texture: Box<dyn Texture>,
     ) -> ConstantMedium {
