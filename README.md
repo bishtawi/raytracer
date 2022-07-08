@@ -2,7 +2,7 @@
 
 Followed guide from https://raytracing.github.io/ as a way to practice Rust
 
-Completed "Ray Tracing in One Weekend" (and added parallelization using Rayon):
+Completed "Ray Tracing in One Weekend" in Rust (and added parallelization using Rayon):
 
 ![Final Book 1 rendering](./book1.png)
 
